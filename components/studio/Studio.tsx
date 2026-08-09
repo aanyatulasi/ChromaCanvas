@@ -6,8 +6,10 @@ import { PaintSurface } from "@/components/canvas/PaintSurface";
 import { AudioStatus } from "@/components/studio/AudioStatus";
 import { ConfirmDialog } from "@/components/studio/ConfirmDialog";
 import { PaletteBar } from "@/components/studio/PaletteBar";
+import { ScalePicker } from "@/components/studio/ScalePicker";
 import { ToolButtons } from "@/components/studio/ToolButtons";
-import { loadPiano, playNote, unlockAudio } from "@/lib/audio/piano";
+import { loadPiano, unlockAudio } from "@/lib/audio/piano";
+import { previewPhrase } from "@/lib/audio/preview";
 import type { Stroke } from "@/lib/paint/types";
 import { usePainting } from "@/store/paintingStore";
 
@@ -48,18 +50,9 @@ export function Studio() {
     };
   }, []);
 
-  /**
-   * Milestone 2 scaffolding: one note per stroke, just to prove the chain from
-   * brush to speaker. Milestone 4 replaces this with a composed phrase — this
-   * deliberately crude mapping is exactly the mechanical pixel-to-note
-   * translation the product must not ship.
-   */
+  /** A finished stroke answers with its own phrase. */
   const previewStroke = useCallback((stroke: Stroke) => {
-    const meanY =
-      stroke.points.reduce((sum, point) => sum + point.y, 0) / stroke.points.length;
-    const scale = ["C3", "E3", "G3", "C4", "E4", "G4", "C5", "E5"];
-    const index = Math.round((1 - Math.min(1, Math.max(0, meanY))) * (scale.length - 1));
-    playNote({ note: scale[index], duration: 1.6, velocity: 0.7 });
+    previewPhrase(stroke.phrase, usePainting.getState().tempo);
   }, []);
 
   // Keyboard shortcuts, for the laptop case. Deliberately not advertised in the
@@ -105,6 +98,8 @@ export function Studio() {
           className="min-w-0 flex-1 bg-transparent text-center text-sm text-ink-muted outline-none transition-colors placeholder:text-ink-faint focus:text-ink"
           placeholder="Untitled"
         />
+
+        <ScalePicker />
 
         <span className="hidden shrink-0 text-xs tabular-nums text-ink-faint sm:block">
           {strokeCount} {strokeCount === 1 ? "stroke" : "strokes"}

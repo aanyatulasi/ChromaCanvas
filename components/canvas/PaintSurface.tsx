@@ -159,14 +159,7 @@ export function PaintSurface({ onStrokeCommitted }: PaintSurfaceProps = {}) {
     const { colorId, sizeId, seed } = usePainting.getState();
     drawStroke(
       ctx,
-      {
-        id: "live",
-        order: -1,
-        points: stroke.points,
-        colorId,
-        sizeId,
-        jitter: (seed % 1000) / 1000,
-      },
+      { points: stroke.points, colorId, sizeId, jitter: (seed % 1000) / 1000 },
       paper,
       // The tail stays open until the pointer lifts; tapering it every frame
       // makes the end of the stroke flinch as it is being drawn.

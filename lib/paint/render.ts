@@ -15,9 +15,18 @@ import type { Stroke } from "./types";
  * All three are clipped to the stroke's own outline, so a stroke can never
  * bleed onto its neighbours.
  */
+/**
+ * Everything drawing needs to know about a stroke, and nothing more.
+ *
+ * Narrower than `Stroke` on purpose: the stroke under the pointer has no music
+ * yet — it has not been committed, so no phrase has been written for it — and
+ * requiring one here would mean fabricating a melody just to draw a line.
+ */
+export type DrawableStroke = Pick<Stroke, "points" | "colorId" | "sizeId" | "jitter">;
+
 export function drawStroke(
   ctx: CanvasRenderingContext2D,
-  stroke: Stroke,
+  stroke: DrawableStroke,
   paper: PaperRect,
   options: { last?: boolean; hasRealPressure?: boolean } = {},
 ): void {

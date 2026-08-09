@@ -7,8 +7,11 @@
  * reload the page a month later, and the melody has to be identical.
  */
 
+/** A seeded generator returning floats in [0, 1). */
+export type Rng = () => number;
+
 /** mulberry32 — small, fast, and good enough for musical decisions. */
-export function makeRng(seed: number): () => number {
+export function makeRng(seed: number): Rng {
   let a = seed >>> 0;
   return function next() {
     a = (a + 0x6d2b79f5) >>> 0;

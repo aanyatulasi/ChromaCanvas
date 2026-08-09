@@ -1,4 +1,6 @@
-import type { PaintId } from "./palette";
+import type { Phrase } from "../music/phrase.ts";
+import type { StrokeFeatures } from "../strokes/features.ts";
+import type { PaintId } from "./palette.ts";
 
 /**
  * A raw sample from the pointer.
@@ -24,9 +26,9 @@ export type BrushSizeId = "fine" | "small" | "medium" | "large" | "broad";
 /**
  * A completed brushstroke — the primary creative object in ChromaCanvas.
  *
- * Musical fields (features, personality, phraseSeed, phrase) arrive in later
- * milestones and are deliberately absent rather than optional-and-empty, so
- * the compiler will point at every place that needs updating when they land.
+ * The stroke carries its own music. Storing the generated phrase on the stroke
+ * rather than deriving it on demand is what makes undo and redo restore the
+ * same melody, and what lets a saved painting be reopened and sound identical.
  */
 export type Stroke = {
   id: string;
@@ -41,6 +43,11 @@ export type Stroke = {
    * from the same die.
    */
   jitter: number;
+  /** The handful of coarse qualities the music is allowed to read. */
+  features: StrokeFeatures;
+  /** Derived from the painting seed and this stroke's order. */
+  phraseSeed: number;
+  phrase: Phrase;
 };
 
 /** The aspect ratios a sheet of paper is allowed to take. */
