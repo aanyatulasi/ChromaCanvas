@@ -36,6 +36,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   interactiveWidget: "resizes-content",
+  // Lets the layout reach under a phone's rounded corners and home indicator,
+  // which is also what makes `env(safe-area-inset-*)` report anything but zero.
+  viewportFit: "cover",
   themeColor: "#141416",
   colorScheme: "dark",
 };
