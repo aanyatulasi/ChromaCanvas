@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PaintSurface } from "@/components/canvas/PaintSurface";
+import { AudioStatus } from "@/components/studio/AudioStatus";
 import { ConfirmDialog } from "@/components/studio/ConfirmDialog";
 import { PaletteBar } from "@/components/studio/PaletteBar";
 import { ToolButtons } from "@/components/studio/ToolButtons";
+import { loadPiano, playNote, unlockAudio } from "@/lib/audio/piano";
+import type { Stroke } from "@/lib/paint/types";
 import { usePainting } from "@/store/paintingStore";
 
 /**
@@ -24,6 +27,40 @@ export function Studio() {
   const strokeCount = usePainting((s) => s.strokes.length);
 
   const requestClear = useCallback(() => setConfirmingClear(true), []);
+
+  // Start downloading samples the moment the studio opens. This needs no user
+  // gesture — decoding audio is allowed while the context is still suspended —
+  // so the piano is usually ready before anyone finishes their first stroke.
+  useEffect(() => {
+    void loadPiano();
+  }, []);
+
+  // Starting the audio context, by contrast, *does* need a gesture. The first
+  // pointerdown is also the start of the first stroke, so the context is
+  // running by the time that stroke is released and wants to make a sound.
+  useEffect(() => {
+    const onFirstGesture = () => void unlockAudio();
+    window.addEventListener("pointerdown", onFirstGesture, { once: true });
+    window.addEventListener("keydown", onFirstGesture, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onFirstGesture);
+      window.removeEventListener("keydown", onFirstGesture);
+    };
+  }, []);
+
+  /**
+   * Milestone 2 scaffolding: one note per stroke, just to prove the chain from
+   * brush to speaker. Milestone 4 replaces this with a composed phrase — this
+   * deliberately crude mapping is exactly the mechanical pixel-to-note
+   * translation the product must not ship.
+   */
+  const previewStroke = useCallback((stroke: Stroke) => {
+    const meanY =
+      stroke.points.reduce((sum, point) => sum + point.y, 0) / stroke.points.length;
+    const scale = ["C3", "E3", "G3", "C4", "E4", "G4", "C5", "E5"];
+    const index = Math.round((1 - Math.min(1, Math.max(0, meanY))) * (scale.length - 1));
+    playNote({ note: scale[index], duration: 1.6, velocity: 0.7 });
+  }, []);
 
   // Keyboard shortcuts, for the laptop case. Deliberately not advertised in the
   // interface — discovering them is a bonus, needing them is not.
@@ -80,7 +117,12 @@ export function Studio() {
             carries the tools and a two-row palette and is a good deal taller,
             so a portrait sheet would otherwise be painted on underneath it. */}
         <div className="absolute inset-0 px-3 pb-48 pt-1 sm:pb-24 sm:pl-24 sm:pr-8 sm:pt-2">
-          <PaintSurface />
+          <PaintSurface onStrokeCommitted={previewStroke} />
+        </div>
+
+        {/* Bottom-left, out of the way of both the rail and the dock. */}
+        <div className="pointer-events-none absolute bottom-2 left-2 sm:bottom-3 sm:left-3">
+          <AudioStatus />
         </div>
 
         {/* Rail: beside the sheet from the tablet breakpoint up. */}

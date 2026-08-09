@@ -34,7 +34,12 @@ type ActiveStroke = {
  * drag would have to redraw the entire artwork, and a painting would get
  * slower to paint on the more of it there was.
  */
-export function PaintSurface() {
+type PaintSurfaceProps = {
+  /** Fired once per completed stroke, with the stroke as committed to history. */
+  onStrokeCommitted?: (stroke: Stroke) => void;
+};
+
+export function PaintSurface({ onStrokeCommitted }: PaintSurfaceProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const committedRef = useRef<HTMLCanvasElement>(null);
   const liveRef = useRef<HTMLCanvasElement>(null);
@@ -293,6 +298,7 @@ export function PaintSurface() {
 
       let committed: Stroke | null = null;
       if (!cancelled) committed = commitStroke(stroke.points);
+      if (committed) onStrokeCommitted?.(committed);
 
       // The committed layer repaints in an effect, one tick later. Clearing the
       // live layer now would blink the stroke out and back in, so it is left in
@@ -308,7 +314,7 @@ export function PaintSurface() {
         scheduleRender();
       }
     },
-    [commitStroke, dpr, paper.height, paper.width, scheduleRender],
+    [commitStroke, dpr, onStrokeCommitted, paper.height, paper.width, scheduleRender],
   );
 
   const onPointerUp = useCallback(
