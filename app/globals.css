@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   ChromaCanvas design tokens
+
+   Tailwind 4 is CSS-first: anything declared in `@theme` becomes both a utility
+   class (bg-panel, text-ink-muted, border-hairline) and a real CSS variable
+   (var(--color-panel)) usable inside gradients, shadows and canvas code.
+
+   The product is one bright object in a dim room: a warm, paper-like painting
+   surface floating on a near-black shell. Two families of colour, and they
+   never mix — shell colours are desaturated greys, paint colours are the only
+   saturated hues on screen. That separation is what keeps a brushstroke
+   reading as artwork rather than as interface.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* -- The shell: the room around the painting ---------------------------- */
+  --color-shell: #141416;
+  --color-panel: #1c1c1f;
+  --color-raised: #232327;
+  --color-hairline: #2a2a2e;
+
+  /* -- Text ---------------------------------------------------------------- */
+  --color-ink: #f2efe9;
+  --color-ink-muted: #8b8880;
+  --color-ink-faint: #5e5b55;
+
+  /* -- Accent. Exactly one, a warm brass, used for active tool state and
+        progress. Nothing else in the chrome is allowed to be colourful,
+        because the paint has to win. ---------------------------------------- */
+  --color-brass: #c9a227;
+  --color-brass-dim: #8a6f1b;
+
+  /* -- The painting surface ------------------------------------------------- */
+  --color-canvas: #f7f3ec;
+  --color-canvas-shade: #ebe5da;
+
+  /* -- The paint palette.
+
+        Seven curated pigments, chosen as muted gouache rather than screen
+        primaries so they sit naturally on warm off-white and stay distinct
+        from each other at brush width. Each one also carries a musical
+        personality (see lib/music/personalities.ts) — the colour a user picks
+        is the single largest influence on how the piano plays their stroke. -- */
+  --color-paint-blue: #3b6ea5;
+  --color-paint-yellow: #e3b23c;
+  --color-paint-red: #c1453b;
+  --color-paint-green: #5c8a5a;
+  --color-paint-purple: #7a5c99;
+  --color-paint-orange: #d97a3c;
+  --color-paint-pink: #d98ba8;
+
+  /* -- Type ---------------------------------------------------------------- */
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* -- Motion. One curve for everything, so the whole interface decelerates
+        with the same hand. ----------------------------------------------------- */
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-shell);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  /* The canvas needs every pointer event it can get; a rubber-band scroll in
+     the middle of a brushstroke would break the stroke in half. */
+  overscroll-behavior: none;
+}
+
+/* Painting is a pointer-driven gesture, so text selection during a drag is
+   never wanted anywhere in the studio. */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------------------------------------------------------------------------
+   The paper surface
+
+   A flat off-white rectangle reads as a div. Three cheap layers make it read
+   as a physical sheet: a warm vertical wash, a fibre texture, and an inner
+   shadow at the edges so it looks lit from above rather than pasted on.
+--------------------------------------------------------------------------- */
+
+.paper {
+  background-color: var(--color-canvas);
+  background-image:
+    /* fibre grain */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+    /* warm wash, lighter at the top */
+      linear-gradient(
+        170deg,
+        #faf7f1 0%,
+        var(--color-canvas) 45%,
+        var(--color-canvas-shade) 100%
+      );
+  box-shadow:
+    inset 0 0 60px rgba(120, 100, 70, 0.06),
+    inset 0 0 2px rgba(90, 75, 50, 0.14),
+    0 24px 60px -20px rgba(0, 0, 0, 0.65);
+}
+
+/* ---------------------------------------------------------------------------
+   Floating chrome
+
+   Toolbars sit above the painting, so they are translucent and blurred rather
+   than solid — the artwork stays visible underneath them.
+--------------------------------------------------------------------------- */
+
+.chrome {
+  background-color: color-mix(in oklab, var(--color-panel) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--color-hairline);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------------------------------------------------------------------------
+   Focus
+
+   Keyboard focus has to be clearly visible without adding a second accent
+   colour, so it borrows the brass.
+--------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -1,0 +1,33 @@
+Salamander Grand Piano
+======================
+
+The .mp3 files in this directory are samples of a Yamaha C5 grand piano from
+the Salamander Grand Piano sample library.
+
+  Author:  Alexander Holm
+  Source:  https://archive.org/details/SalamanderGrandPianoV3
+  Mirror:  https://tonejs.github.io/audio/salamander/  (the subset used here)
+  Licence: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+           https://creativecommons.org/licenses/by/3.0/
+
+What is included
+----------------
+A 30-sample subset at a single velocity layer, one sample every minor third
+from A0 to C8, encoded as 128 kbps mp3. Tone.js pitch-shifts between these
+sample points to cover the full keyboard. The complete original library is
+considerably larger and includes multiple velocity layers; this subset was
+chosen so the samples can be bundled with the application rather than fetched
+from a third-party host at runtime.
+
+Your obligations under CC BY 3.0
+--------------------------------
+If you redistribute this application or these samples, you must keep the
+attribution to Alexander Holm intact. You may use the samples commercially and
+may modify them, provided attribution is given. There is no share-alike
+requirement.
+
+ChromaCanvas discharges this by naming the author and licence in:
+  - this file
+  - ATTRIBUTION.md at the repository root
+  - the project README
+  - a credit line visible in the application interface
