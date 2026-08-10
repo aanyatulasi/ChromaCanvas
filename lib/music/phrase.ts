@@ -1,6 +1,6 @@
 import type { PaintId } from "../paint/palette.ts";
 import type { StrokeFeatures } from "../strokes/features.ts";
-import { COLOUR_VOICES, findChord, snapToChordTone, type Chord } from "./chords.ts";
+import { chordTones, COLOUR_VOICES, findChord, snapToChordTone, type Chord } from "./chords.ts";
 import { CONTOURS, cellsFor, contoursFor, RHYTHM_CELLS } from "./material.ts";
 import { makeRng, pick, type Rng } from "./rng.ts";
 import { degreeToMidi, midiToNote, type Scale } from "./scales.ts";
@@ -47,6 +47,12 @@ export type Phrase = {
   beats: number;
   chordDegree: number;
   chordQuality: Chord["quality"];
+  /**
+   * The chord's tones as scale degrees. Carried on the phrase so the left hand
+   * can accompany exactly the chord the melody was written against, rather
+   * than re-deriving it and risking a different answer.
+   */
+  chordToneDegrees: number[];
   motifRole: MotifRole;
   /** The shape this phrase was built from, so later phrases can refer back. */
   contourId: string;
@@ -256,6 +262,7 @@ export function generatePhrase(request: PhraseRequest): Phrase {
     beats: bars * 4,
     chordDegree: chord.degree,
     chordQuality: chord.quality,
+    chordToneDegrees: chordTones(chord),
     motifRole: role,
     contourId,
     contourSteps: steps,

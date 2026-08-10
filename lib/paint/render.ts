@@ -87,6 +87,63 @@ export function drawStroke(
   ctx.restore();
 }
 
+/**
+ * Light a stroke up while its phrase is sounding.
+ *
+ * Two parts. The whole stroke lifts a little, so the eye can see which of them
+ * is currently singing; and a soft head travels along it at the speed of the
+ * phrase, so the stroke reads as being *performed* rather than merely selected.
+ * Drawn additively onto the overlay canvas, which leaves the artwork beneath
+ * untouched — nothing here can damage the painting.
+ *
+ * `t` is progress through the stroke's phrase, 0 to 1.
+ */
+export function drawIllumination(
+  ctx: CanvasRenderingContext2D,
+  stroke: DrawableStroke,
+  paper: PaperRect,
+  t: number,
+): void {
+  const paint = getPaint(stroke.colorId);
+  const whole = outlinePath(stroke.points, paper, stroke.sizeId, false, true);
+  if (!whole) return;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+
+  // The general lift, brightest at the middle of the phrase so strokes fade in
+  // and out rather than snapping on.
+  ctx.globalAlpha = 0.16 + 0.12 * Math.sin(Math.PI * Math.min(1, Math.max(0, t)));
+  ctx.fillStyle = paint.hex;
+  ctx.shadowColor = paint.hex;
+  ctx.shadowBlur = 24;
+  ctx.fill(whole.path);
+
+  // The travelling head: a short run of the stroke around the current point.
+  const count = stroke.points.length;
+  if (count >= 4) {
+    const head = Math.min(count - 1, Math.max(1, Math.round(t * (count - 1))));
+    const tail = Math.max(0, head - Math.ceil(count * 0.14));
+    if (head - tail >= 2) {
+      const segment = outlinePath(
+        stroke.points.slice(tail, head + 1),
+        paper,
+        stroke.sizeId,
+        false,
+        true,
+      );
+      if (segment) {
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = "#fffaf0";
+        ctx.shadowBlur = 30;
+        ctx.fill(segment.path);
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
 /** Repaint every committed stroke from scratch. Used on resize, undo and load. */
 export function drawAll(
   ctx: CanvasRenderingContext2D,

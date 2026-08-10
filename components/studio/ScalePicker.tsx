@@ -37,7 +37,9 @@ export function ScalePicker() {
         <select
           value={scaleId}
           onChange={(event) => request(event.target.value as ScaleId)}
-          className="cursor-pointer appearance-none rounded-full border border-hairline bg-panel py-1.5 pl-3 pr-7 text-xs text-ink-muted outline-none transition-colors hover:text-ink"
+          // Capped on a phone so it cannot crowd the painting's title out of
+          // the header. The label clips; the menu itself is unaffected.
+          className="max-w-28 cursor-pointer appearance-none truncate rounded-full border border-hairline bg-panel py-1.5 pl-3 pr-7 text-xs text-ink-muted outline-none transition-colors hover:text-ink sm:max-w-none"
         >
           {SCALES.map((scale) => (
             <option key={scale.id} value={scale.id}>

@@ -231,6 +231,33 @@ export function playNote({ note, time, duration, velocity }: NoteEvent): void {
   }
 }
 
+/**
+ * Play a note at an exact time on the audio clock.
+ *
+ * Used by the transport, where every note's moment has already been computed.
+ * `playNote`'s relative "+seconds" form drifts under scheduling because it is
+ * measured from whenever the call happens to be made; this takes the audio
+ * context's own timeline, which is the only clock that does not drift.
+ */
+export function playNoteAt(
+  note: string,
+  time: number,
+  duration: number,
+  velocity: number,
+): void {
+  if (!instrument) return;
+  try {
+    instrument.triggerAttackRelease(note, duration, time, velocity);
+  } catch {
+    /* A note that cannot be scheduled is not worth stopping the piece for. */
+  }
+}
+
+/** The Tone module, once loaded. Null until the piano has been asked for. */
+export function getToneSync(): typeof ToneNS | null {
+  return tone;
+}
+
 /** Stop everything immediately. */
 export function stopAll(): void {
   try {

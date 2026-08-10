@@ -7,9 +7,11 @@ import { AudioStatus } from "@/components/studio/AudioStatus";
 import { ConfirmDialog } from "@/components/studio/ConfirmDialog";
 import { PaletteBar } from "@/components/studio/PaletteBar";
 import { ScalePicker } from "@/components/studio/ScalePicker";
+import { TransportBar } from "@/components/studio/TransportBar";
 import { ToolButtons } from "@/components/studio/ToolButtons";
 import { loadPiano, unlockAudio } from "@/lib/audio/piano";
 import { previewPhrase } from "@/lib/audio/preview";
+import { getPlaybackState, stop as stopPlayback } from "@/lib/audio/transport";
 import type { Stroke } from "@/lib/paint/types";
 import { usePainting } from "@/store/paintingStore";
 
@@ -50,10 +52,17 @@ export function Studio() {
     };
   }, []);
 
-  /** A finished stroke answers with its own phrase. */
+  /**
+   * A finished stroke answers with its own phrase — unless the piece is
+   * playing, in which case a preview would collide with the performance.
+   */
   const previewStroke = useCallback((stroke: Stroke) => {
+    if (getPlaybackState().playing) return;
     previewPhrase(stroke.phrase, usePainting.getState().tempo);
   }, []);
+
+  // Leaving the studio mid-performance must not leave the piano playing on.
+  useEffect(() => stopPlayback, []);
 
   // Keyboard shortcuts, for the laptop case. Deliberately not advertised in the
   // interface — discovering them is a bonus, needing them is not.
@@ -108,10 +117,12 @@ export function Studio() {
 
       {/* -- The paper ------------------------------------------------------- */}
       <div className="relative min-h-0 flex-1">
-        {/* The bottom padding reserves room for the dock. On a phone the dock
-            carries the tools and a two-row palette and is a good deal taller,
-            so a portrait sheet would otherwise be painted on underneath it. */}
-        <div className="absolute inset-0 px-3 pb-48 pt-1 sm:pb-24 sm:pl-24 sm:pr-8 sm:pt-2">
+        {/* The bottom padding reserves room for the dock, which grew a
+            transport row once there is something to play. On a phone the dock
+            also carries the tools and a two-row palette, so it is taller again
+            — without the extra room a portrait sheet ends up being painted on
+            underneath it. */}
+        <div className="absolute inset-0 px-3 pb-60 pt-1 sm:pb-36 sm:pl-24 sm:pr-8 sm:pt-2">
           <PaintSurface onStrokeCommitted={previewStroke} />
         </div>
 
@@ -130,6 +141,7 @@ export function Studio() {
           className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 px-3 pb-3"
           style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
+          <TransportBar />
           <div className="sm:hidden">
             <ToolButtons orientation="horizontal" onRequestClear={requestClear} />
           </div>

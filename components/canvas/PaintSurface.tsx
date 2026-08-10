@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getTransportBeat } from "@/lib/audio/transport";
+import { usePlayback } from "@/lib/audio/usePlayback";
+import { useArrangement } from "@/lib/music/useArrangement";
 import type { PaperRect } from "@/lib/paint/brush";
-import { drawAll, drawStroke, hitTest } from "@/lib/paint/render";
+import { drawAll, drawIllumination, drawStroke, hitTest } from "@/lib/paint/render";
 import type { RawPoint, Stroke } from "@/lib/paint/types";
 import { usePainting } from "@/store/paintingStore";
 
@@ -58,6 +61,8 @@ export function PaintSurface({ onStrokeCommitted }: PaintSurfaceProps = {}) {
   const commitStroke = usePainting((s) => s.commitStroke);
   const eraseStroke = usePainting((s) => s.eraseStroke);
   const setAspect = usePainting((s) => s.setAspect);
+  const { playing } = usePlayback();
+  const arrangement = useArrangement();
 
   // -- Sizing ---------------------------------------------------------------
 
@@ -178,6 +183,47 @@ export function PaintSurface({ onStrokeCommitted }: PaintSurfaceProps = {}) {
     },
     [],
   );
+
+  // -- Illumination during playback -----------------------------------------
+
+  /**
+   * While the piece plays, the overlay canvas stops being the in-flight stroke
+   * and becomes the stage lighting. Driven by its own animation loop reading
+   * the transport's clock directly rather than by React state, because this
+   * has to update every frame and re-rendering the tree sixty times a second
+   * to move a highlight would be absurd.
+   */
+  useEffect(() => {
+    if (!playing || paper.width === 0) return;
+
+    let frameId = 0;
+    const draw = () => {
+      frameId = requestAnimationFrame(draw);
+
+      const ctx = liveRef.current?.getContext("2d");
+      if (!ctx) return;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, paper.width, paper.height);
+
+      // Someone painting during playback takes the layer back.
+      if (active.current) return;
+
+      const beat = getTransportBeat();
+
+      for (const span of arrangement.windows) {
+        if (beat < span.startBeat || beat >= span.endBeat) continue;
+        const stroke = strokes.find((s) => s.id === span.strokeId);
+        if (!stroke) continue;
+
+        const length = span.endBeat - span.startBeat;
+        drawIllumination(ctx, stroke, paper, length > 0 ? (beat - span.startBeat) / length : 0);
+      }
+    };
+
+    draw();
+    return () => cancelAnimationFrame(frameId);
+  }, [playing, paper, dpr, strokes, arrangement]);
 
   // -- Pointer input --------------------------------------------------------
 
